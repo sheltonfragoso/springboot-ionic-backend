@@ -16,11 +16,14 @@ import org.springframework.stereotype.Service;
 import com.sheltonfragoso.springbootionicbackend.domain.Cidade;
 import com.sheltonfragoso.springbootionicbackend.domain.Cliente;
 import com.sheltonfragoso.springbootionicbackend.domain.Endereco;
+import com.sheltonfragoso.springbootionicbackend.domain.enums.Perfil;
 import com.sheltonfragoso.springbootionicbackend.domain.enums.TipoCliente;
 import com.sheltonfragoso.springbootionicbackend.dto.ClienteDTO;
 import com.sheltonfragoso.springbootionicbackend.dto.ClienteNewDTO;
 import com.sheltonfragoso.springbootionicbackend.repositories.ClienteRepository;
 import com.sheltonfragoso.springbootionicbackend.repositories.EnderecoRepository;
+import com.sheltonfragoso.springbootionicbackend.security.UserSS;
+import com.sheltonfragoso.springbootionicbackend.services.exceptions.AuthorizationException;
 import com.sheltonfragoso.springbootionicbackend.services.exceptions.DataIntegrityException;
 import com.sheltonfragoso.springbootionicbackend.services.exceptions.ObjectNotFoundException;
 
@@ -37,6 +40,10 @@ public class ClienteService {
 	private BCryptPasswordEncoder pe;
 
 	public Cliente find(Integer id) {
+		UserSS user = UserService.authenticated();
+		if (user==null || !user.hasRole(Perfil.ADMIN) && !id.equals(user.getId())) {
+			throw new AuthorizationException("Acesso negado");
+		}
 		Optional<Cliente> obj = repo.findById(id);
 		return obj.orElseThrow(() -> new ObjectNotFoundException(
 				"Objeto não encontrado! Id: " + id + ", Tipo: " + Cliente.class.getName()));
